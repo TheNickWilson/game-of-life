@@ -19,6 +19,7 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
     )
 
   def mainlyDeadCells = frequencyCell(2, 1)
+  def mainlyLivingCells = frequencyCell(1, 2)
 
   def genGameOfLife(size: Int, genCell: Gen[Cell] = arbitrary[Cell]): Gen[GameOfLife] =
     Gen.listOfN(size, Gen.listOfN(size, genCell))
@@ -40,8 +41,27 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
         forAll(gen) {
           case (game, x, y) =>
-            
+
             whenever(game.neighbours(x, y).count(_ == Alive) <= 2) {
+              game.next.get(x, y).value mustEqual Dead
+            }
+        }
+      }
+
+      "when it has more than 3 living neighbours" in {
+
+        val gen =
+          for {
+            size <- Gen.chooseNum(3, 100)
+            game <- genGameOfLife(size, mainlyLivingCells)
+            x    <- Gen.chooseNum(0, size - 1)
+            y    <- Gen.chooseNum(0, size - 1)
+          } yield (game.set(x, y, Dead), x, y)
+
+        forAll(gen) {
+          case (game, x, y) =>
+
+            whenever(game.neighbours(x, y).count(_ == Alive) > 2) {
               game.next.get(x, y).value mustEqual Dead
             }
         }
