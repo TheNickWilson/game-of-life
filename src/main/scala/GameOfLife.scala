@@ -11,4 +11,7 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
       state.updated(y, state(y).updated(x, cell))
     }
   }
+
+  def get(x: Int, y: Int): Option[Cell] =
+    state.lift(y).flatMap(_.lift(x))
 }

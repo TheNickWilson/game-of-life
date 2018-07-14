@@ -1,9 +1,9 @@
 import org.scalacheck.{Arbitrary, Gen, Shrink}
 import org.scalacheck.Arbitrary.arbitrary
 import org.scalatest.prop.GeneratorDrivenPropertyChecks
-import org.scalatest.{FreeSpec, MustMatchers}
+import org.scalatest.{FreeSpec, MustMatchers, OptionValues}
 
-class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenPropertyChecks {
+class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenPropertyChecks with OptionValues {
 
   implicit def noShrink[A]: Shrink[A] = Shrink.shrinkAny
 
@@ -46,14 +46,14 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
                 xs <- (x - 1) to (x + 1)
                 ys <- (y - 1) to (y + 1)
                 if xs != x || ys != y
-              } yield game.state.lift(ys).flatMap(_.lift(xs))
+              } yield game.get(xs, ys)
             }.flatten.toList
 
             val numberOfLivingNeighbours =
               neighbours.count(_ == Alive)
 
             whenever(numberOfLivingNeighbours <= 2) {
-              game.next.state(y)(x) mustEqual Dead
+              game.next.get(x, y).value mustEqual Dead
             }
         }
       }
@@ -80,4 +80,44 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
       }
     }
   }
+
+  "get" - {
+
+    "must return `None`" - {
+
+      "when a coordinate doesn't exist in a game" in {
+
+        val gen = for {
+          size <- Gen.chooseNum(1, 100)
+          game <- genGameOfLife(size)
+          x    <- arbitrary[Int]
+          y    <- arbitrary[Int]
+        } yield (size, game, x, y)
+
+        forAll(gen) {
+          case (size, game, x, y) =>
+            whenever((x < 0 || x > size) && (y < 0 || y > size)) {
+              game.get(x, y) mustNot be (defined)
+            }
+        }
+      }
+    }
+
+    "must return the cell at that coordinate" in {
+
+      val gen = for {
+        size <- Gen.chooseNum(1, 100)
+        game <- genGameOfLife(size)
+        x    <- Gen.chooseNum(0, size - 1)
+        y    <- Gen.chooseNum(0, size - 1)
+        cell <- arbitrary[Cell]
+      } yield (game, x, y, cell)
+
+      forAll(gen) {
+        case (game, x, y, cell) =>
+          game.set(x, y, cell).get(x, y).value mustEqual cell
+      }
+    }
+  }
+
 }
