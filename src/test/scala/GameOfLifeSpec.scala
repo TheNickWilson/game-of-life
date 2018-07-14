@@ -29,12 +29,12 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
     "must stay dead" - {
 
-      "when it has 2 or fewer living neighbours" in {
+      "when it does not have exactly three living neighbours" in {
 
         val gen =
           for {
             size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size, mainlyDeadCells)
+            game <- genGameOfLife(size)
             x    <- Gen.chooseNum(0, size - 1)
             y    <- Gen.chooseNum(0, size - 1)
           } yield (game.set(x, y, Dead), x, y)
@@ -42,26 +42,7 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
         forAll(gen) {
           case (game, x, y) =>
 
-            whenever(game.neighbours(x, y).count(_ == Alive) <= 2) {
-              game.next.get(x, y).value mustEqual Dead
-            }
-        }
-      }
-
-      "when it has more than 3 living neighbours" in {
-
-        val gen =
-          for {
-            size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size, mainlyLivingCells)
-            x    <- Gen.chooseNum(0, size - 1)
-            y    <- Gen.chooseNum(0, size - 1)
-          } yield (game.set(x, y, Dead), x, y)
-
-        forAll(gen) {
-          case (game, x, y) =>
-
-            whenever(game.neighbours(x, y).count(_ == Alive) > 2) {
+            whenever(game.neighbours(x, y).count(_ == Alive) != 3) {
               game.next.get(x, y).value mustEqual Dead
             }
         }
