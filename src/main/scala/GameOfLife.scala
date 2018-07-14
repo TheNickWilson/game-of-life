@@ -4,7 +4,21 @@ object Dead extends Cell
 
 case class GameOfLife(state: Seq[Seq[Cell]]) {
 
-  def next: GameOfLife = this
+  def next: GameOfLife = {
+    val newState = state.zipWithIndex.map {
+      case (row, y) =>
+        row.zipWithIndex.map {
+          case (cell, x) =>
+            if (cell == Dead && neighbours(x, y).count(_ == Alive) == 3) {
+              Alive
+            } else {
+              cell
+            }
+        }
+    }
+
+    GameOfLife(newState)
+  }
 
   def set(x: Int, y: Int, cell: Cell): GameOfLife = {
     GameOfLife {
