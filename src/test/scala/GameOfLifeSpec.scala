@@ -10,6 +10,14 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
       Gen.oneOf(Alive, Dead)
     }
 
+  def frequencyCell(deadFreq: Int, liveFreq: Int): Gen[Cell] =
+    Gen.frequency(
+      deadFreq -> Dead,
+      liveFreq -> Alive
+    )
+
+  def mainlyDeadCells = frequencyCell(2, 1)
+
   "a dead cell" - {
 
     "must stay dead" - {
@@ -17,7 +25,7 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
       "when it has 2 or fewer living neighbours" in {
 
         val gameGen: Gen[Seq[Seq[Cell]]] =
-          Gen.listOfN(3, Gen.listOfN(3, arbitrary[Cell]))
+          Gen.listOfN(3, Gen.listOfN(3, mainlyDeadCells))
 
         forAll(gameGen) {
           state =>
@@ -26,8 +34,13 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
             val patchedMiddleRow = middleRow.patch(1, Seq(Dead), 1)
             val newState = state.patch(1, Seq(patchedMiddleRow), 1)
 
-            val game = GameOfLife(newState)
-            game.next.state(1)(1) mustEqual Dead
+            val numberOfLivingCells =
+              newState.map(_.count(_ == Alive)).sum
+
+            whenever(numberOfLivingCells <= 2) {
+              val game = GameOfLife(newState)
+              game.next.state(1)(1) mustEqual Dead
+            }
         }
       }
     }
