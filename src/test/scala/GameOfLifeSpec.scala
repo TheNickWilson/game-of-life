@@ -40,19 +40,8 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
         forAll(gen) {
           case (game, x, y) =>
-
-            val neighbours = {
-              for {
-                xs <- (x - 1) to (x + 1)
-                ys <- (y - 1) to (y + 1)
-                if xs != x || ys != y
-              } yield game.get(xs, ys)
-            }.flatten.toList
-
-            val numberOfLivingNeighbours =
-              neighbours.count(_ == Alive)
-
-            whenever(numberOfLivingNeighbours <= 2) {
+            
+            whenever(game.neighbours(x, y).count(_ == Alive) <= 2) {
               game.next.get(x, y).value mustEqual Dead
             }
         }
@@ -120,4 +109,33 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
     }
   }
 
+  "neighbours" - {
+
+    "must return a list of neighbours" in {
+
+      val gen = for {
+        size   <- Gen.chooseNum(1, 100)
+        game   <- genGameOfLife(size)
+        x      <- Gen.oneOf(0, size - 1)
+        y      <- Gen.oneOf(0, size - 1)
+      } yield (game, x, y)
+
+      forAll(gen) {
+        case (game, x, y) =>
+
+          val neighbours = Seq(
+            game.get(x - 1, y - 1),
+            game.get(x    , y - 1),
+            game.get(x + 1, y - 1),
+            game.get(x - 1, y),
+            game.get(x + 1, y),
+            game.get(x - 1, y + 1),
+            game.get(x    , y + 1),
+            game.get(x + 1, y + 1)
+          ).flatten
+
+          game.neighbours(x, y) must contain theSameElementsAs neighbours
+      }
+    }
+  }
 }

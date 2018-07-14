@@ -14,4 +14,12 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
 
   def get(x: Int, y: Int): Option[Cell] =
     state.lift(y).flatMap(_.lift(x))
+
+  def neighbours(x0: Int, y0: Int): List[Cell] = {
+    for {
+      x <- (x0 - 1) to (x0 + 1)
+      y <- (y0 - 1) to (y0 + 1)
+      if x != x0 || y != y0
+    } yield get(x, y)
+  }.flatten.toList
 }
