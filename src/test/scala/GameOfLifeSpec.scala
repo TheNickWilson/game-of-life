@@ -45,4 +45,26 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
       }
     }
   }
+
+  "set" - {
+
+    "must set the cell at a particular coordinate" in {
+
+      val gen = {
+        for {
+          cell  <- arbitrary[Cell]
+          size  <- Gen.chooseNum(1, 100)
+          game  <- Gen.listOfN(size, Gen.listOfN(size, arbitrary[Cell]))
+                    .map(s => GameOfLife(s))
+          x     <- Gen.chooseNum(0, size - 1)
+          y     <- Gen.chooseNum(0, size - 1)
+        } yield (game, cell, x, y)
+      }
+
+      forAll(gen) {
+        case (game, cell, x, y) =>
+          game.set(x, y, cell).state(y)(x) mustEqual cell
+      }
+    }
+  }
 }
