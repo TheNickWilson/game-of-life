@@ -8,13 +8,19 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
     val newState = state.zipWithIndex.map {
       case (row, y) =>
         row.zipWithIndex.map {
-          case (cell, x) =>
-            if (cell == Dead && neighbours(x, y).count(_ == Alive) == 3) {
-              Alive
-            } else if (cell == Alive && neighbours(x, y).count(_ == Alive) < 2) {
+          case (Alive, x) =>
+            if (neighbours(x, y).count(_ == Alive) < 2) {
+              Dead
+            } else if (neighbours(x, y).count(_ == Alive) > 3) {
               Dead
             } else {
-              cell
+              Alive
+            }
+          case (Dead, x) =>
+            if (neighbours(x, y).count(_ == Alive) == 3) {
+              Alive
+            } else {
+              Dead
             }
         }
     }
