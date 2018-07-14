@@ -11,6 +11,8 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
           case (cell, x) =>
             if (cell == Dead && neighbours(x, y).count(_ == Alive) == 3) {
               Alive
+            } else if (cell == Alive && neighbours(x, y).count(_ == Alive) < 2) {
+              Dead
             } else {
               cell
             }
