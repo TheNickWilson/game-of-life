@@ -65,6 +65,34 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
     }
   }
 
+  "a living cell" - {
+
+    "must live on" - {
+
+      "if it has 2 or 3 live neighbours" in {
+
+        val gen =
+          for {
+            size <- Gen.chooseNum(3, 100)
+            game <- genGameOfLife(size, frequencyCell(7,3))
+            x    <- Gen.chooseNum(0, size - 1)
+            y    <- Gen.chooseNum(0, size - 1)
+          } yield (game.set(x, y, Alive), x, y)
+
+        forAll(gen) {
+          case (game, x, y) =>
+
+            val numberOfLiveNeighbours =
+              game.neighbours(x, y).count(_ == Alive)
+
+            whenever(numberOfLiveNeighbours == 2 || numberOfLiveNeighbours == 3) {
+              game.next.get(x, y).value mustEqual Alive
+            }
+        }
+      }
+    }
+  }
+
   "set" - {
 
     "must set the cell at a particular coordinate" in {
