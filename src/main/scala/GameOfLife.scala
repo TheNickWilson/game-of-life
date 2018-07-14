@@ -4,5 +4,5 @@ object Dead extends Cell
 
 case class GameOfLife(state: Seq[Seq[Cell]]) {
 
-  def next: GameOfLife = ???
+  def next: GameOfLife = this
 }
