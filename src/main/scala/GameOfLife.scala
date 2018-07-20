@@ -9,15 +9,15 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
       case (row, y) =>
         row.zipWithIndex.map {
           case (Alive, x) =>
-            if (neighbours(x, y).count(_ == Alive) < 2) {
+            if (livingNeighbours(x, y) < 2) {
               Dead
-            } else if (neighbours(x, y).count(_ == Alive) > 3) {
+            } else if (livingNeighbours(x, y) > 3) {
               Dead
             } else {
               Alive
             }
           case (Dead, x) =>
-            if (neighbours(x, y).count(_ == Alive) == 3) {
+            if (livingNeighbours(x, y) == 3) {
               Alive
             } else {
               Dead
@@ -44,4 +44,7 @@ case class GameOfLife(state: Seq[Seq[Cell]]) {
       if x != x0 || y != y0
     } yield get(x, y)
   }.flatten.toList
+
+  def livingNeighbours(x: Int, y: Int): Int =
+    neighbours(x, y).count(_ == Alive)
 }

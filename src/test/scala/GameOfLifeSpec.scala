@@ -22,25 +22,28 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
     Gen.listOfN(size, Gen.listOfN(size, genCell))
       .map(s => GameOfLife(s))
 
+  def genGameWithCoords(genCell: Gen[Cell] = arbitrary[Cell]): Gen[(GameOfLife, Int, Int)] =
+    for {
+      size <- Gen.chooseNum(3, 100)
+      game <- genGameOfLife(size, genCell)
+      x    <- Gen.chooseNum(0, size - 1)
+      y    <- Gen.chooseNum(0, size - 1)
+    } yield (game, x, y)
+
   "a dead cell" - {
 
     "must stay dead" - {
 
       "when it does not have exactly three living neighbours" in {
 
-        val gen =
-          for {
-            size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size)
-            x    <- Gen.chooseNum(0, size - 1)
-            y    <- Gen.chooseNum(0, size - 1)
-          } yield (game.set(x, y, Dead), x, y)
-
-        forAll(gen) {
+        forAll(genGameWithCoords()) {
           case (game, x, y) =>
 
-            whenever(game.neighbours(x, y).count(_ == Alive) != 3) {
-              game.next.get(x, y).value mustEqual Dead
+            whenever(game.livingNeighbours(x, y) != 3) {
+              game
+                .set(x, y, Dead)
+                .next
+                .get(x, y).value mustEqual Dead
             }
         }
       }
@@ -48,18 +51,14 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
     "must become alive if it has exactly 3 live neighbours" in {
 
-      val gen =
-        for {
-          size <- Gen.chooseNum(3, 100)
-          game <- genGameOfLife(size, frequencyCell(6, 4))
-          x    <- Gen.chooseNum(0, size - 1)
-          y    <- Gen.chooseNum(0, size - 1)
-        } yield (game.set(x, y, Dead), x, y)
-
-      forAll(gen) {
+      forAll(genGameWithCoords(frequencyCell(6, 4))) {
         case (game, x, y) =>
-          whenever(game.neighbours(x, y).count(_ == Alive) == 3) {
-            game.next.get(x, y).value mustEqual Alive
+
+          whenever(game.livingNeighbours(x, y) == 3) {
+            game
+              .set(x, y, Dead)
+              .next
+              .get(x, y).value mustEqual Alive
           }
       }
     }
@@ -71,22 +70,14 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
       "if it has 2 or 3 live neighbours" in {
 
-        val gen =
-          for {
-            size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size, frequencyCell(7,3))
-            x    <- Gen.chooseNum(0, size - 1)
-            y    <- Gen.chooseNum(0, size - 1)
-          } yield (game.set(x, y, Alive), x, y)
-
-        forAll(gen) {
+        forAll(genGameWithCoords(frequencyCell(11, 5))) {
           case (game, x, y) =>
 
-            val numberOfLiveNeighbours =
-              game.neighbours(x, y).count(_ == Alive)
-
-            whenever(numberOfLiveNeighbours == 2 || numberOfLiveNeighbours == 3) {
-              game.next.get(x, y).value mustEqual Alive
+            whenever(game.livingNeighbours(x, y) == 2 || game.livingNeighbours(x, y) == 3) {
+              game
+                .set(x, y, Alive)
+                .next
+                .get(x, y).value mustEqual Alive
             }
         }
       }
@@ -96,36 +87,28 @@ class GameOfLifeSpec extends FreeSpec with MustMatchers with GeneratorDrivenProp
 
       "if it has fewer than 2 live neighbours" in {
 
-        val gen =
-          for {
-            size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size, frequencyCell(3, 1))
-            x    <- Gen.chooseNum(0, size - 1)
-            y    <- Gen.chooseNum(0, size - 1)
-          } yield (game.set(x, y, Alive), x, y)
-
-        forAll(gen) {
+        forAll(genGameWithCoords(frequencyCell(7, 1))) {
           case (game, x, y) =>
-            whenever(game.neighbours(x, y).count(_ == Alive) < 2) {
-              game.next.get(x, y).value mustEqual Dead
+
+            whenever(game.livingNeighbours(x, y) < 2) {
+              game
+                .set(x, y, Alive)
+                .next
+                .get(x, y).value mustEqual Dead
             }
         }
       }
 
       "if it has more than 3 live neighbours" in {
 
-        val gen =
-          for {
-            size <- Gen.chooseNum(3, 100)
-            game <- genGameOfLife(size, frequencyCell(1, 2))
-            x    <- Gen.chooseNum(0, size - 1)
-            y    <- Gen.chooseNum(0, size - 1)
-          } yield (game.set(x, y, Alive), x, y)
-
-        forAll(gen) {
+        forAll(genGameWithCoords(frequencyCell(3, 5))) {
           case (game, x, y) =>
-            whenever(game.neighbours(x, y).count(_ == Alive) > 3) {
-              game.next.get(x, y).value mustEqual Dead
+
+            whenever(game.livingNeighbours(x, y) > 3) {
+              game
+                .set(x, y, Alive)
+                .next
+                .get(x, y).value mustEqual Dead
             }
         }
       }
